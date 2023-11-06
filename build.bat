@@ -1,20 +1,30 @@
 @echo off
 
-nasm -fwin32 main.asm
+set base=%cd%
+
+cd %base%\src
+
+%base%\bin\nasm -fwin32 main.asm
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-nasm -fwin32 window.asm
+%base%\bin\nasm -fwin32 window.asm
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-nasm -fwin32 net.asm
+%base%\bin\nasm -fwin32 net.asm
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-nasm -fwin32 dbgfile.asm
+%base%\bin\nasm -fwin32 dbgfile.asm
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-nlink main.obj window.obj net.obj dbgfile.obj -lio -lutil -lgfx -o main.exe
+mkdir %base%\out
+
+move *.obj %base%\out
+
+cd %base%\out
+
+%base%\bin\ld main.obj window.obj net.obj dbgfile.obj -lio -lutil -lgfx -o main.exe %base%\start.obj -L%base%\lib -lkernel32 --entry start
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-echo Build succesful. Run 'run.bat' to open the application.
+move main.exe %base%
 
-pause
+cd %base%

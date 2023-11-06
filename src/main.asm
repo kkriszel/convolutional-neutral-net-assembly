@@ -41,7 +41,7 @@ main:
 	.return:								; in case of error, only return
 		mov		eax, msg_pause				; display pause message
 		call	io_writestr
-		call	io_readint					; wait until the user presses the enter key						
+		call	io_readint					; wait until the user presses the enter key
 		ret
 ; END (main)
 

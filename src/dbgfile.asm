@@ -33,7 +33,7 @@ dbgfile_init:
     inc     ebx                                 ; EBX = 1, we want to open the file for writing
     call    fio_open                            ; we call the function from the util library, it takes EAX and EBX as parameters
     mov     [file_handle], eax                  ; the functions returns the file handler in EAX, we save this
-    
+
     test    dword [fs_debug], 0x1               ; check if we need to print some debug information to the screen
     jz      .no_s_debug
     mov     eax, msg_success_open
@@ -57,7 +57,7 @@ dbgfile_write:
     push    ecx
     push    edx
     push    edi
-                 
+
     xor     ecx, ecx                            ; ECX = 0, this is the counter which iterates through the channels
     .loop_channels:
         cmp     ecx, [esp + 8]                  ; if we reached the number of channels, we jump out
@@ -67,7 +67,7 @@ dbgfile_write:
             cmp     ebx, [esp + 12]             ; if we reached the number of rows, we jump out
             jge     .end_loop_row
             mov     edi, string                 ; EDI = beginning of the memory location allocated for the string
-            xor     edx, edx                    ; EDX = 0, this is the counter which iterates through the size (width/columns) of the map   
+            xor     edx, edx                    ; EDX = 0, this is the counter which iterates through the size (width/columns) of the map
             .loop_col:
                 cmp     edx, [esp + 12]         ; if we reacher the number of columns, we jump out
                 jge     .end_loop_col
@@ -128,7 +128,7 @@ _put_string:
 
     ; calculate the length of the string in bytes, by subtracting
     ; the start of the memory location of the string from the end of it
-    sub     edi, string                         
+    sub     edi, string
     mov     eax, [file_handle]                  ; place the file handler to EAX
     mov     ebx, string                         ; place the beginning of the memory location to EBX
     mov     ecx, edi                            ; place the number of bytes (the length of the string) to ECX
@@ -151,7 +151,7 @@ _put_newline:
     mov     ebx, string                         ; place the beginning of the memory location to EBX
     mov     [ebx], byte NEW_LINE_CHR            ; place the newline character as the first byte of the string
     xor     ecx, ecx
-    inc     ecx                                 ; ECX = 1, the number of bytes that need to be written                            
+    inc     ecx                                 ; ECX = 1, the number of bytes that need to be written
     call    fio_write                           ; write to file, given the parameters EAX, EBX, ECX
 
     pop     ecx                                 ; load the saved registers
@@ -171,10 +171,10 @@ _add_float:
 
     mov     al, '+'
     movd    ebx, xmm0                           ; check the sign of the number (the most significant bit - the 32th)
-    test    ebx, 0x80000000      
+    test    ebx, 0x80000000
     jz      .sign_write                         ; if the sign bit is zero, the number is positive, so we add a '+' sign to the string
     inc     al                                  ; else, we add 2 to AL, so it becomes '-'
-    inc     al                                  
+    inc     al
     xor     ebx, 0x80000000                     ; we flip the sign bit to be zero
     movd    xmm0, ebx                           ; then we put back the number into XMM0
 
@@ -191,7 +191,7 @@ _add_float:
 
     roundss xmm1, xmm0, 3                       ; round XMM0 with truncation to XMM1
     subss   xmm0, xmm1                          ; keep the fraction of the number in XMM0
-    mov     eax, 10                         
+    mov     eax, 10
     cvtsi2ss    xmm1, eax                       ; XMM1 = 10.00
 
     .decimal:
@@ -236,7 +236,7 @@ _add_int:
         mov     [edi], al                       ; add to the string
         inc     edi
         jmp     .write_digit                    ; loop through all the digits
-    
+
   .end_write:
     pop     ebp                                 ; load the saved registers
     pop     edx
@@ -253,11 +253,11 @@ section .data
     msg_success_open        db              'Debug file succesfully opened.', 10, 0
     msg_success_close       db              'Debug file succesfully closed.', 10, 0
 
-    file_handle             dd              0                       ; memory pointer to file handler       
+    file_handle             dd              0                       ; memory pointer to file handler
 
 	; debug state variable - first bit set to 1 if screen debug is enabled, second bit set to 1 if file debug is enabled
 	; here the file debug bit will always be set, and the default value of the screen debug bit will be overriden upon the call of dbgfile_init
-    fs_debug         		dd              0x1                     
+    fs_debug         		dd              0x1
 ; END (section .data)
 
 ;======================================================================================================

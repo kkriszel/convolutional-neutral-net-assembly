@@ -12,7 +12,7 @@
 %include 	        'dbgfile.inc'
 
 ; size in which the input image should be resized (width/height), and the total size in bytes that the new image will occupy
-%define             RESIZE_SIZE                 28                                      
+%define             RESIZE_SIZE                 28
 %define             RESIZE_BYTES                RESIZE_SIZE * RESIZE_SIZE * 4
 
 ; constant sizes of Convolution2d
@@ -43,11 +43,11 @@
 
 ; floating point constants
     ; minus infinity represented as a 32 bit floating point number
-%define			    FLT_MIN_INF			        0xFF800000              
+%define			    FLT_MIN_INF			        0xFF800000
     ; if used on the same XMM register with the SHUFPS operation, this immediate value will
-    ; broadcast the lower 32 bit of the register to all other parts of the register  
-%define 		    SHUFPS_ALL			        0x00    
-    ; as above, but this whill shuffle the elements one position to the left, the most significant becoming the least one     
+    ; broadcast the lower 32 bit of the register to all other parts of the register
+%define 		    SHUFPS_ALL			        0x00
+    ; as above, but this whill shuffle the elements one position to the left, the most significant becoming the least one
 %define			    SHUFPS_SHL			        0x93
 
 ; global functions, must be "extern"-ed in 'net.inc' to be used in the main function
@@ -142,7 +142,7 @@ net_start:
 
 	test	dword [fs_debug], 0x2            		; check if the maps are needed to be printed to the debug file during the net functions
 	jz		.no_f_debug1
-	mov		eax, [fs_debug]                  
+	mov		eax, [fs_debug]
 	call	dbgfile_init                            ; if yes, initialize the debug file module with EAX = debug state variable
 	mov		eax, [map_buff]                         ; then write the resized image to the file in the first step
 	mov		ebx, [map_size]
@@ -160,7 +160,7 @@ net_start:
 		inc		ebp                                 ; increase EBP, because this should be done either way in each jump
 		cmp		[ebp - 1], byte CONV2D_CODE         ; check which function is coded at the current position
 		je		.conv2d
-		cmp		[ebp - 1], byte RELU_CODE			
+		cmp		[ebp - 1], byte RELU_CODE
 		je		.relu
 		cmp		[ebp - 1], byte MAXPOOL2D_CODE
 		je		.maxpool2d
@@ -172,9 +172,9 @@ net_start:
 	  .conv2d:
 	  	call	_conv2d
 		add		ebp, 8								; this function holds two parameters, skip these after evaluating
-		jmp		.write_dbg 
+		jmp		.write_dbg
 	  .relu:
-	  	call	_relu 
+	  	call	_relu
 		jmp		.write_dbg
 	  .maxpool2d:
 	  	call	_maxpool2d
@@ -203,14 +203,14 @@ net_start:
   .no_s_debug1:
 
 	test	dword [fs_debug], 0x2					; check if we used the file debug
-	jz		.no_f_debug2						
+	jz		.no_f_debug2
 	call	dbgfile_destroy							; if so, we need to call the module's destructor
   .no_f_debug2:
 
 	call	_write_result							; write the result (prediction) of the net to the screen
 
 	mov		eax, [map_buff]							; free the memory used for storing the map
-	call	mem_free 
+	call	mem_free
 
 	pop		ebp										; load the saved registers
 	pop		edx
@@ -254,10 +254,10 @@ net_destroy:
 ; END (net_destroy)
 
 ;======================================================================================================
-; Initializes the structure array of the neural network. Reads the functions from the txt files, and 
+; Initializes the structure array of the neural network. Reads the functions from the txt files, and
 ; stores the crucial information, which will be used later on while evaluating the whole big net function.
 _init_model_struct:
-	push	eax								; save the used registers to the stack 
+	push	eax								; save the used registers to the stack
 	push	ebx
 	push	ecx
 	push	edx
@@ -270,7 +270,7 @@ _init_model_struct:
 
 	mov		ebx, net_model					; EBX points to the beginning of the structure array
 
-	.read_lines:							; iterate through the lines of the txt file	
+	.read_lines:							; iterate through the lines of the txt file
 		call	_next_line					; read the current line into temp_str string
 		cmp		[temp_str], byte 0			; if the first character is the null character, there are no more lines
 		je		.end_read_lines				; so we jump out
@@ -280,7 +280,7 @@ _init_model_struct:
 
 	mov		[ebx], byte -1					; we indicate the end of the structure array with a -1
 	shl		dword [net_weight_bytes], 2		; we counted how many float numbers should be in the bin file, now we multiply this by 4 to get the number of bytes
-	
+
 	call	fio_close						; close the file, EAX = file handle
 
 	pop		ebp								; load the saved registers
@@ -338,7 +338,7 @@ _next_num:
 		jge		.find_first_num
   .end_find_first_num:					; if we reached this, either we terminated the string or found the first digit
 
-	xor		ecx, ecx					; ECX = the resulting numeric value				
+	xor		ecx, ecx					; ECX = the resulting numeric value
 	xor		ebx, ebx					; we need to set EBX to 0, because we will only use its lower byte for data move, but we will use the whole for operations
 	.build_num:							; loop through the string
 		cmp		[eax], byte 0			; if we reached the end of the string, we jump out
@@ -369,15 +369,15 @@ _parse_line:
 	mov 	eax, temp_str					; with EAX begin at the beginning of the string
 	dec		eax								; we start before the beginning of it, because the first step will be incrementing it
 	.find_first_char:						; we want to find the first character in the line, from this we will deduce the function
-		inc 	eax 						
+		inc 	eax
 		cmp		[eax], byte 0				; if we reached the end of the string, it's over
 		je		.end_find_first_char
 		cmp		[eax], byte SPACE_CHR		; if we encountered a space, we skip it
 		je	 	.find_first_char
 		cmp		[eax], byte TAB_CHR			; if we encountered a tab, we skip it
-		je		.find_first_char 			
+		je		.find_first_char
   .end_find_first_char:						; if it is not space or tab, we found a character
-	
+
 	; let's check which function could indicate the character by comparing the first char in the string
 	; to the first character in the names of the funcitons
 	cmp		[eax], byte CONV2D_CHAR
@@ -385,8 +385,8 @@ _parse_line:
 	cmp		[eax], byte RELU_CHAR
 	je		.relu
 	cmp		[eax], byte MAXPOOL2D_CHAR
-	je		.maxpool2d 
-	cmp		[eax], byte LINEAR_CHAR 
+	je		.maxpool2d
+	cmp		[eax], byte LINEAR_CHAR
 	je 		.linear
 	cmp		[eax], byte SOFTMAX_CHAR
 	je		.softmax
@@ -421,7 +421,7 @@ _parse_line:
 	call	_next_num						; the second parameter is the second number
 	mov		[ebx + 5], ecx
 	add		[net_weight_bytes], ecx			; the second parameter indicates how many biases will there be
-	imul	ecx, [ebx + 1]					; there will be in_features * out_features number of weights			
+	imul	ecx, [ebx + 1]					; there will be in_features * out_features number of weights
 	add		[net_weight_bytes], ecx
 	add		ebx, 9							; step 1 + 2 * 4 bytes in the structure array
 	jmp		.end
@@ -452,7 +452,7 @@ _init_net_weight:
 	call	mem_alloc						; allocate memory for the buffer
 	mov		[net_weight_buff], eax			; save the pointer to the allocated memory
 
-	mov		eax, net_bin_name				; open the file with EAX name 
+	mov		eax, net_bin_name				; open the file with EAX name
 	xor		ebx, ebx						; and EBX = 0 -> read mode
 	call	fio_open						; after the call, EAX will hold the file handler
 
@@ -515,7 +515,7 @@ _img_resize:
     xorps   xmm0, xmm0								; XMM0 = 0 on all 4 parts (128 bits)
     .load_zero:
         cmp     ecx, RESIZE_BYTES					; check if we reached the end of the buffer
-        jge     .end_load_zero		
+        jge     .end_load_zero
         movups  [eax + ecx], xmm0					; use SSE vectorization, move the 0 to 4 floating point numbers in a step
         add     ecx, 16								; step by 4 * 4 bytes
         jmp     .load_zero
@@ -579,17 +579,17 @@ _img_resize:
         pop     ebx									; load the saved registers
         pop     eax
       .end_new:
-        cvtsi2ss    xmm0, ebp						; convert the accumulated sum to floating point 
+        cvtsi2ss    xmm0, ebp						; convert the accumulated sum to floating point
         movd        [edi + eax], xmm0				; place it in the new image's buffer
         add     eax, 4								; step 4 bytes in the new image's buffer
-        jmp     .loop1								; loop through all the 
+        jmp     .loop1								; loop through all the
   .end_loop1:										; we are done with the whole map
 
     cvtsi2ss    xmm1, [esp]							; convert y to floating point number
     shufps      xmm1, xmm1, SHUFPS_ALL				; broadcast it to all elements of XMM1
     mulps       xmm1, xmm1							; calculate the square of y
 
-	mov			eax, 255							
+	mov			eax, 255
     cvtsi2ss	xmm2, eax							; XMM2 = 255.00
     shufps      xmm2, xmm2, SHUFPS_ALL				; broadcast it to all elements of XMM2
 
@@ -608,9 +608,9 @@ _img_resize:
   .end_loop_resize:
 
     add		esp, 4									; ignore the saved y value
-	
+
 	; set the map properties
-	mov		[map_size], dword RESIZE_SIZE			; map_size = RESIZE_SIZE (width/height)	
+	mov		[map_size], dword RESIZE_SIZE			; map_size = RESIZE_SIZE (width/height)
 	mov		[map_channels], dword 1					; only one channel
 
 	test	dword [fs_debug], 0x1					; check if we need to print debug information
@@ -618,7 +618,7 @@ _img_resize:
     mov     eax, msg_success_prep
     call    io_writestr
   .no_s_debug:
-    
+
 	pop		ebp										; load the saved registers
 	pop		edi
 	pop		esi
@@ -642,7 +642,7 @@ _conv2d:
 	push	edi
 
 	mov		eax, [ebp + 4]										; EAX = out_channels
-	imul	eax, [map_size]										
+	imul	eax, [map_size]
 	imul	eax, [map_size]										; EAX = out_channels * map_size^2
 	shl		eax, 2												; EAX = out_channels * map_size^2 * 4, the size of the output map in bytes
 	call	mem_alloc											; allocate EAX number of bytes
@@ -665,7 +665,7 @@ _conv2d:
 
 	mov		eax, [ebp]											; EAX = in_channels
 	imul	eax, [ebp + 4]										; EAX = in_channels * out_channels
-	imul	eax, eax, CONV_KERNEL_SIZE							
+	imul	eax, eax, CONV_KERNEL_SIZE
 	imul	eax, eax, CONV_KERNEL_SIZE							; EAX = in_channels * out_channels * CONV_SZ^2
 	shl		eax, 2												; EAX = in_channels * out_channels * CONV_SZ^2 * 4, the number of bytes of weights of the convolution
 	add		eax, [net_weight_ptr]								; EAX = previous base + number of bytes of weights
@@ -673,7 +673,7 @@ _conv2d:
 
 	mov		[count1], dword 0									; in count1 we keep track at which convolution filter we are at (there are out_channel in total)
 	.convolution:
-		mov		eax, [count1]									
+		mov		eax, [count1]
 		cmp		eax, [ebp + 4]									; check if we reached the number of convolutions
 		jge		.end_convolution
 		mov		esi, [map_buff]									; we start from the beginning of the old map
@@ -687,27 +687,27 @@ _conv2d:
 			.loop_row:
 				mov		eax, [i1]
 				cmp		eax, [map_size]							; check if we reached the number of rows
-				jge		.end_loop_row 
+				jge		.end_loop_row
 				mov		[j1], dword 0							; in j1 we keep track at which column of the new map we are at (there are map_size in total)
 				.loop_col:
 					mov		eax, [j1]
 					cmp		eax, [map_size]						; check if we reached the number of columns
 					jge		.end_loop_col
 					xorps	xmm0, xmm0							; XMM0 = 0, in this we will accumulate the value of the filtering in the current cell of the map
-					mov 	edx, CONV_KERNEL_SIZE				
+					mov 	edx, CONV_KERNEL_SIZE
 					shr		edx, 1								; EDX = [CONV_SZ / 2] (whole part, so in case if the kernel is 3, EDX will be 1)
-					mov		[i2], edx							
+					mov		[i2], edx
 					neg 	dword [i2]							; with i2 we start the filtering from -EDX (-1), this indicates the relative row distance from the current cell
 					xor		ecx, ecx							; ECX = 0, keeps track of the number of the weight that we need to use
 					.filter_row:
 						cmp		[i2], edx						; check if we reached the end of the kernel (1) with the rows
 						jg		.end_filter_row
-						mov		[j2], edx				
+						mov		[j2], edx
 						neg 	dword [j2]						; with j2 we start the filtering from -EDX (-1), this indicates the relative column distance from the current cell
 						.filter_col:
 							cmp		[j2], edx					; check if we reached the end of the kernel (1) with the columns
 							jg		.end_filter_col
-							mov		eax, [i1]					
+							mov		eax, [i1]
 							push	eax							; save i1 to stack
 							add		eax, [i2]					; calculate absolute row coordinate of kerneling (i1 + i2)
 							mov		[i1], eax					; place it in i1
@@ -725,7 +725,7 @@ _conv2d:
 						  	movss	xmm2, [ebx + ecx]			; load the float from the filter
 							mulss	xmm1, xmm2					; multiply the map value with the filter weight
 							addss	xmm0, xmm1					; add the calculated value to the accumulator
-							pop		eax							
+							pop		eax
 							mov		[j1], eax					; restore j1
 							pop		eax
 							mov		[i1], eax					; restore i1
@@ -748,7 +748,7 @@ _conv2d:
 		  .end_loop_row:										; we are done with a depth/channel of the old map
 		  	mov		eax, CONV_KERNEL_SIZE						; calculate CONV_SZ * CONV_SZ * 4
 			imul	eax, eax
-			shl		eax, 2										
+			shl		eax, 2
 			add		[net_weight_ptr], eax						; we can skip this many bytes, and move on to the next filter
 			mov		eax, [map_size]								; calculate map_size * map_size * 4
 			imul	eax, eax
@@ -758,7 +758,7 @@ _conv2d:
 			jmp		.depth
 	  .end_depth:												; we are done with a convolution, now we have to add the bias to the generated channel
 	  	mov		eax, [bias_ptr]									; EAX points to the next bias
-		movss	xmm0, [eax]										; move the byte bias to XMM0 
+		movss	xmm0, [eax]										; move the byte bias to XMM0
 		shufps	xmm0, xmm0, SHUFPS_ALL							; broadcast the value to all elements of XMM0
 	  	mov		eax, [map_size]									; calculate map_size * map_size * 4, the total size in bytes of the generated new depth/channel
 		imul	eax, eax
@@ -788,7 +788,7 @@ _conv2d:
 	; NOTE: the map size remains the same
 
 	; with the net_weight_ptr we reached the beginning of the biases, we have to skip these
-	mov		eax, [ebp + 4]										; calculate the bytes occupied by the biases, whose number is equal to out_channels							
+	mov		eax, [ebp + 4]										; calculate the bytes occupied by the biases, whose number is equal to out_channels
 	shl		eax, 2												; EAX = out_channels * 4
 	add		[net_weight_ptr], eax								; skip the calculated number of bytes with the pointer
 
@@ -855,7 +855,7 @@ _maxpool2d:
 	mov		eax, [map_size]
 	mov		ebx, POOL_KERNEL_SIZE
 	cdq
-	idiv	ebx														; EAX = the new size of the map = MAP_SIZE / KERNEL_SIZE 
+	idiv	ebx														; EAX = the new size of the map = MAP_SIZE / KERNEL_SIZE
 	mov		[map_size_new], eax										; load the new size to the memory
 	imul	eax, eax												; calculate new_size^2 * 4, the total bytes of a channel in the new map
 	shl		eax, 2
@@ -899,7 +899,7 @@ _maxpool2d:
 						imul	eax, eax, POOL_STRIDE				; this is equal to i1 * POOL_STRIDE + i2
 						add		eax, [i2]
 						mov		[i2], eax							; load this calculated value to i2
-						mov		eax, [j2]							
+						mov		eax, [j2]
 						push	eax									; save j2 to the stack
 						mov		eax, [j1]							; in EAX, calculate the absolute column coordinate of the current cell in the old map
 						imul	eax, eax, POOL_STRIDE				; this is equal to j1 * POOL_STRIDE + j2
@@ -912,7 +912,7 @@ _maxpool2d:
 						pop		eax									; retrieve the saved value of i2
 						mov		[j2], eax
 						pop		eax									; retrieve the saved value of j2
-						mov		[i2], eax							
+						mov		[i2], eax
 						inc		dword [j2]							; step to the next column in the pool kernel
 						jmp		.loop_old_col
 				  .end_loop_old_col:
@@ -938,7 +938,7 @@ _maxpool2d:
 	add		esp, 8													; ignore the two 4 byte values stored in the stack
 
 	mov		eax, [map_size_new]										; actualize the size of the current map to be the size of the new map
-	mov		[map_size], eax						
+	mov		[map_size], eax
 
 	mov		eax, [map_buff]											; the old map goes out of scope, we free the buffer's memory
 	call	mem_free
@@ -988,7 +988,7 @@ _linear:
 		xorps	xmm0, xmm0				; XMM0 = 0, in this we accumulate the product of the input nodes and weights
 		mov		[count2], dword 0		; count2 = 0, with this we loop through the input nodes
 		.loop_in:
-			mov		eax, [count2]		
+			mov		eax, [count2]
 			cmp		eax, [ebp]			; check if we reached the number of input nodes
 			jge		.end_loop_in
 			movss	xmm1, [esi]			; load a float from the input nodes into XMM1
@@ -1054,7 +1054,7 @@ _softmax:
 		inc		ecx						; step to the next float
 		jmp		.sum_map
   .end_sum_map:
-  
+
   	xor		ecx, ecx					; ECX = 0, with this we will loop through the floats of the map again
 	.replace:
 		cmp		ecx, [map_channels]		; check if we reached the total number of bytes in the map
@@ -1073,7 +1073,7 @@ _softmax:
 	xor		ecx, ecx					; ECX = 0, with this we will loop through the float of the map, once again
 	.mul100:
 		cmp		ecx, [map_channels]		; check if we reached the total number of bytes in the map
-		jge		.end_mul100				
+		jge		.end_mul100
 		movss	xmm1, [eax + 4 * ecx]	; load a value from the map into XMM1
 		mulss	xmm1, xmm0				; multiply the value with XMM0 = 100.00
 		movss	[eax + 4 * ecx], xmm1	; load the multiplied value back to its place
@@ -1100,9 +1100,9 @@ _write_result:
 	call	io_writestr
 
 	mov		ebx, [map_buff]						; EAX points to the beginning of the map buffer
-	mov 	ecx, FLT_MIN_INF					
+	mov 	ecx, FLT_MIN_INF
 	movd	xmm1, ecx							; XMM1 gets the minus infinity float value, in this we will calculate the highest map value
-	xor		edx, edx						
+	xor		edx, edx
 	dec		edx									; EDX = -1 by default, in this we will calculate the digit associated with the highest map value
 
 	xor		ecx, ecx							; ECX = 0, loop through all the floats in the map
@@ -1154,8 +1154,8 @@ _write_struct:
 	push	eax									; save the used registers to the stack
 	push	ebp
 
-	call	io_writeln							
-	mov		eax, msg_header						
+	call	io_writeln
+	mov		eax, msg_header
 	call	io_writestr							; print a fancy header to the screen
 	mov		eax, msg_struct
 	call	io_writestr							; print a line of message to the screen
@@ -1176,7 +1176,7 @@ _write_struct:
 		cmp		[ebp - 1], byte SOFTMAX_CODE
 		je		.softmax
 		jmp		.end_loop_func					; if no match found, there has to be some kind of error
-	  .conv2d:									
+	  .conv2d:
 	  	mov		eax, msg_conv2d
 		call	io_writestr						; print the name of the conv2d function
 		mov		eax, [ebp]
@@ -1187,13 +1187,13 @@ _write_struct:
 		call	io_writeint						; print its second parameter
 		call	io_writeln
 		add		ebp, 8							; skip the memory occupied by the two parameters
-		jmp		.loop_func 
+		jmp		.loop_func
 	  .relu:
 	  	mov		eax, msg_relu
 		call	io_writestr						; print the name of the relu function
 		jmp		.loop_func
 	  .maxpool2d:
-	  	mov		eax, msg_maxpool2d				
+	  	mov		eax, msg_maxpool2d
 		call	io_writestr						; print the name of the maxpool
 		jmp		.loop_func
 	  .linear:
@@ -1209,7 +1209,7 @@ _write_struct:
 		add		ebp, 8							; skip the memory occupied ny the two parameters
 		jmp		.loop_func
 	  .softmax:
-	  	mov		eax, msg_softmax			
+	  	mov		eax, msg_softmax
 		call	io_writestr						; print the name of the softmax function
 		jmp		.loop_func
   .end_loop_func:
@@ -1234,7 +1234,7 @@ section .data
 	net_weight_buff					dd						0
 	net_weight_ptr					dd						0
 	bias_ptr						dd						0
-	
+
 	; this always points to the buffer memory location of the current map
 	map_size						dd						0
 	map_channels					dd						0

@@ -20,7 +20,7 @@
 %define             BTN_CLEAR                   'c'
 %define             BTN_TOGGLE_F_DEBUG          'f'
 %define             BTN_TOGGLE_S_DEBUG          's'
-%define             BTN_RESZ_MIN                '1'    
+%define             BTN_RESZ_MIN                '1'
 %define             BTN_RESZ_MAX                '5'
 %define             BTN_HELP                    'h'
 
@@ -64,8 +64,8 @@ win_init:
 
 	; calculates the width and height of the window based on the calculated absolute base (B) and the given constant base multipliers
 	mov     eax, CONST_W_MULT
-	imul    eax, ebp                
-	mov     [screen_width], eax     		; EAX = [screen_width] = B * CONST_W_MULT 
+	imul    eax, ebp
+	mov     [screen_width], eax     		; EAX = [screen_width] = B * CONST_W_MULT
 	mov     ebx, CONST_H_MULT
 	imul    ebx, ebp
 	mov     [screen_height], ebx    		; EBX = [screen_height] = B * CONST_H_MULT
@@ -89,7 +89,7 @@ win_init:
 	; each box represents an object (a frame, a button, etc.), with the following properties:
 	; starting x coordinate, starting y coordinate, box width, box height, color, fill (0 or 1)
 	; each property is a 4 byte value
-  .init_boxes:            
+  .init_boxes:
 	; main frame box, with (B - 1, B - 1) starting coordinates and (B * 8 + 2) width and height and YELLOW color and without fill
 	mov     [frame_box], ebp
 	dec 	dword [frame_box]
@@ -218,7 +218,7 @@ win_draw:
 
 	; this functions return a memory location in EAX which needs to be filled with
 	; the pixels that we want to draw on the screen
-	call    gfx_map                         
+	call    gfx_map
 	xor     ecx, ecx
 	mov     ebx, [pixelbuff]
 
@@ -237,7 +237,7 @@ win_draw:
 	call    gfx_unmap
 	call    gfx_draw
 
-	pop     edx                             ; loading back the saved registers 
+	pop     edx                             ; loading back the saved registers
 	pop     ecx
 	pop     ebx
 	pop     eax
@@ -260,7 +260,7 @@ win_update:
 	push	ebp									; save this used register to the stack
 
 	; DL = 0, it will hold the events that are important in the main function (and some other local things too)
-	xor     dl, dl   
+	xor     dl, dl
 
 	cmp     [pen_down], byte 0              	; we check if the pen is down
 	je      .event_loop
@@ -270,7 +270,7 @@ win_update:
 	mov     ecx, canvas_box            			; the clear box is basically our canvas
 	call    _check_boundary                 	; we check if (EAX, EBX) is inside the box
 	jnc     .event_loop
-	
+
 	; if it is pressed on the canvas, we have to draw a dot
 	call    _draw_dot
 
@@ -304,21 +304,21 @@ win_update:
 
 	  .box_accept:
 		mov     ecx, accept_box                 ; we are still in the mouse pressed condition, we check if the accept button was pressed (green)
-		call    _check_boundary 
+		call    _check_boundary
 		jnc     .mouse_released                 ; if not, let's check the next thing
 		call	_copy_canvas                	; if it was pressed, we have to copy the pixels of the canvas to the frame buffer
 		or		dl, 0x2                         ; we indicate that the accept was pressed
 		jmp		.event_loop                     ; check the next event
 
-	  .mouse_released:  
+	  .mouse_released:
 		cmp     ebp, -MOUSE_LEFT    			; if the mouse was released, we should also take the pen up
-		jne     .clear  
-		mov     [pen_down], byte 0  
+		jne     .clear
+		mov     [pen_down], byte 0
 		jmp		.event_loop                     ; check the next event
 
-	  .clear:   
+	  .clear:
 		cmp     ebp, BTN_CLEAR      			; check if the keyboard button for clear was pressed
-		jne     .accept 
+		jne     .accept
 		test	dword [fs_debug], 0x1    		; from now on, it's the same as above for clear
 		jz      .no_debug2
 		mov     eax, msg_clr_win
@@ -330,18 +330,18 @@ win_update:
 
 	  .accept:
 		cmp     ebp, BTN_ACCEPT     			; check if the keyboard button for accept was pressed
-		jne     .help   
+		jne     .help
 		call	_copy_canvas                	; same as above for accept
-		or		dl, 0x2 
-		jmp		.event_loop 
+		or		dl, 0x2
+		jmp		.event_loop
 
-	  .help:    
+	  .help:
 		cmp     ebp, BTN_HELP       			; check if the help button was pressed
-		jne     .inc_pen    
+		jne     .inc_pen
 		call    win_disphelp                    ; if yes, display help
 		jmp     .event_loop                     ; check the next event
 
-	  .inc_pen: 
+	  .inc_pen:
 	  	cmp		ebp, BTN_INC_PEN    			; check if the pen is needed to be increased
 		jne		.dec_pen
 		add		[pen_pct], dword PEN_PCT_STEP   ; increase the pen size with constant ammount
@@ -359,7 +359,7 @@ win_update:
 		call	io_writestr
 	  .no_debug3:
 		jmp		.event_loop                     ; check the next event
-	
+
 	  .dec_pen:
 	  	cmp		ebp, BTN_DEC_PEN     			; check if the pen size is needed to be decreased
 		jne		.resize
@@ -378,7 +378,7 @@ win_update:
 		call	io_writestr
 	  .no_debug4:
 		jmp		.event_loop                     ; check the next event
-	
+
 	  .resize:
 		cmp     ebp, BTN_RESZ_MIN   			; check if the button is betweem the given (RESZ_MIN..RESZ_MAX) range for resize
 		jl      .toggle_f_debug
@@ -393,23 +393,23 @@ win_update:
 		jmp     .event_loop                     ; check the next event
 
 	  .toggle_f_debug:							; check if the toggle button for file debugging was pressed
-		cmp     ebp, BTN_TOGGLE_F_DEBUG  
+		cmp     ebp, BTN_TOGGLE_F_DEBUG
 		jne     .toggle_s_debug
 		xor     [fs_debug], dword 0x2    		; if yes, invert the second bit of the toggle variable
 		test	dword [fs_debug], 0x1    		; check if we need to debug to the screen
 		jz      .no_debug5
 		mov     eax, msg_toggle_f_debug1        ; if yes, print that the file debugging was toggled
 		call    io_writestr
-		mov     ebx, [fs_debug]      
+		mov     ebx, [fs_debug]
 		shr     ebx, 1                          ; EBX=0 if file debugging is OFF, EBX=1 if ON
 		lea     eax, [msg_toggle_f_debug2 + 4 * ebx] ; with this little hack we save a conditional jump
-		call    io_writestr                 
+		call    io_writestr
 		call    io_writeln
 	  .no_debug5:
 		jmp     .event_loop                     ; check the next event
-	
+
 	  .toggle_s_debug:							; check if the toggle button for screen debugging was pressed
-		cmp     ebp, BTN_TOGGLE_S_DEBUG         
+		cmp     ebp, BTN_TOGGLE_S_DEBUG
 		jne     .event_loop
 		xor     [fs_debug], dword 0x1    		; if yes, invert the first bit of the toggle variable
 		mov     eax, msg_toggle_s_debug1        ; print the corresponding message
@@ -439,9 +439,9 @@ win_destroy:
 	push    eax
 	call    gfx_destroy                     ; it takes no arguments
 	mov     eax, [pixelbuff]                ; free memory of pixel buffer
-	call    mem_free    
+	call    mem_free
 	mov     eax, [framebuff]                ; free memory of frame buffer
-	call    mem_free    
+	call    mem_free
 	test    dword [fs_debug], 0x1    		; check is screen debug is enabled
 	je      .no_debug
 	mov     eax, msg_success_win_dest
@@ -526,7 +526,7 @@ _draw_vertical_line:
 	pop     ebx                     ; EBX = buffer index of start point
 	add     esp, 4                  ; move the stack pointer by 4 bytes
 
-	mov     eax, [screen_width]     
+	mov     eax, [screen_width]
 	shl     eax, 2                  ; increment by WIDTH * 4 bytes, thus stepping a whole row
 
 	.loop_pixel:
@@ -557,7 +557,7 @@ _draw_box:
 	mov     edi, eax                    ; EDI = address of the box
 	mov     eax, [edi + 4]              ; EAX = y coordinate
 	mov     ebx, [edi]                  ; EBX = x starting coordinate
-	mov     ecx, [edi]              
+	mov     ecx, [edi]
 	add     ecx, [edi + 8]              ; ECX = x starting + width = x ending coordinate
 	mov     edx, [edi + 16]             ; EDX = color
 	call    _draw_horizontal_line       ; draw a horizontal line on EAX y axis between EBX, ECX x axis points
@@ -608,7 +608,7 @@ _check_boundary:
 
 	cmp     eax, [ecx]          ; if x < starting_x, it is not inside
 	jl      .no_contain
-	sub     eax, [ecx + 8]  
+	sub     eax, [ecx + 8]
 	cmp     eax, [ecx]          ; if x > starting_x + width, it is not inside
 	jg      .no_contain
 
@@ -660,7 +660,7 @@ _get_dist:
 
 ;======================================================================================================
 ; Draws a dot (circle) with (EAX, EBX) center and ABSOLUTE_BASE * [pen_pct] radius size
-_draw_dot:	
+_draw_dot:
 	push    eax                             ; save some registers
 	push    ebx
 	push    ecx
@@ -720,9 +720,9 @@ _draw_dot:
 		inc     eax                         ; increase the x coordinate
 		jmp     .loop_x                     ; go to next column
   .end_loop_x:
-  
+
 	add     esp, 16                         ; ignore the stuff saved to the stack
-	
+
 	pop		ebp                             ; retrieve the saved registers
 	pop		edx
 	pop		ecx
@@ -759,7 +759,7 @@ _copy_canvas:
 		mov		eax, [esp + 12]                 ; EAX = x_start
 		.loop_x:
 			cmp		eax, [esp + 4]              ; check if we reached x_end
-			jge		.end_loop_x 
+			jge		.end_loop_x
 			call	_get_buffer_position        ; get the buffer index of the original screen from point (EAX, EBX) in ECX
 			mov		ecx, [ecx]                  ; copy the pixel from original into ECX
 			mov		[edx], cl                   ; the pixel is either BLACK (0, 0, 0) or WHITE (255, 255, 255), so the first byte is enough
