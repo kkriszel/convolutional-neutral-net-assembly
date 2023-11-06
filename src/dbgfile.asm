@@ -1,6 +1,6 @@
 ;======================================================================================================
-;=										    Created by 						 					  	  =
-;=									Kiss Krisztian, january 2022									  =
+;=                                            Created by                                              =
+;=                                    Kiss Krisztian, january 2022                                    =
 ;======================================================================================================
 
 ; Compile:
@@ -108,7 +108,7 @@ dbgfile_destroy:
     mov     eax, [file_handle]
     call    fio_close                           ; closing the file, by placing the file handler into EAX
 
-    test    dword [fs_debug], 0x1        		; check if we need to print some debug information to the screen
+    test    dword [fs_debug], 0x1               ; check if we need to print some debug information to the screen
     jz      .no_s_debug
     mov     eax, msg_success_close
     call    io_writestr
@@ -255,9 +255,9 @@ section .data
 
     file_handle             dd              0                       ; memory pointer to file handler
 
-	; debug state variable - first bit set to 1 if screen debug is enabled, second bit set to 1 if file debug is enabled
-	; here the file debug bit will always be set, and the default value of the screen debug bit will be overriden upon the call of dbgfile_init
-    fs_debug         		dd              0x1
+    ; debug state variable - first bit set to 1 if screen debug is enabled, second bit set to 1 if file debug is enabled
+    ; here the file debug bit will always be set, and the default value of the screen debug bit will be overriden upon the call of dbgfile_init
+    fs_debug                 dd              0x1
 ; END (section .data)
 
 ;======================================================================================================

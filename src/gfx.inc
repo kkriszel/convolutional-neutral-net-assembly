@@ -4,7 +4,7 @@
 ; Creates the graphics window
 ; In:
 ;   EAX - window width in pixels (X)
-;	EBX	- window height in pixels (Y)	
+;   EBX - window height in pixels (Y)
 ;   ECX - window mode: 0 (window), 1 (fullscreen)
 ;   EDX - window title string pointer (can be 0)
 ; Out:
@@ -17,7 +17,7 @@ extern gfx_destroy
 ; Maps the framebuffer
 ; Returns a pointer to an *uninitialized* image (array of pixels)
 ; Out:
-;	EAX - pointer to the framebuffer (top-left pixel)
+;   EAX - pointer to the framebuffer (top-left pixel)
 ;
 ; Use this to get a pointer to a pixel buffer which you can use to draw on the screen
 ; The size of a pixel is 4 bytes and contains the following values in *this* order: B, G, R, 0 (blue, green, red, zero/not used)
@@ -35,7 +35,7 @@ extern gfx_draw
 
 ; Gets the next keyboard/mouse/window event
 ; Out:
-;	EAX - code of the event (32-bit *signed* integer)
+;   EAX - code of the event (32-bit *signed* integer)
 ;
 ; The events are queued and this function will return *all* new events
 ; If there are no more events, the return value is 0
@@ -49,13 +49,13 @@ extern gfx_getevent
 
 ; Gets the current coordinates of the mouse
 ; Out:
-;	EAX - X coordinate
-;	EBX - Y coordinate
+;   EAX - X coordinate
+;   EBX - Y coordinate
 extern gfx_getmouse
 
 ; Shows/hides the cursor
 ; In:
-;	EAX - 0 (hide), 1 (show)
+;   EAX - 0 (hide), 1 (show)
 extern gfx_showcursor
 
 %endif
